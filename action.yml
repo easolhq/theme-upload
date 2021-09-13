@@ -1,6 +1,6 @@
 name: 'Easol Theme Upload'
 description: 'Deploys Easol themes to be used when building sites'
-author: kylebyrne
+author: Easol
 runs:
   using: 'docker'
   image: 'Dockerfile'
