@@ -4,6 +4,6 @@ author: kylebyrne
 runs:
   using: 'docker'
   image: 'Dockerfile'
-brand:
+branding:
   color: 'white'
   icon: 'terminal'
