@@ -1,0 +1,9 @@
+name: 'Easol Theme Upload'
+description: 'Deploys Easol themes to be used when building sites'
+author: kylebyrne
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+brand:
+  color: 'white'
+  icon: 'terminal'
