@@ -19,6 +19,10 @@ name: Theme Deploy
 on:
   push:
     branches: [ main ]
+# Run one deploy at a time, so an older deploy can't finish last
+concurrency:
+  group: theme-deploy-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,3 +49,32 @@ and CI logs.
 | EASOL_KEY    | The Easol access key provided by your contact at Easol | `secret env`   | Yes      |
 | EASOL_SECRET | The Easol secret key provided by your contact at Easol | `secret env`   | Yes      |
 | THEME_KEY    | The key creators will use to refer to your theme       | `env`          | Yes      |
+
+## How a deploy works
+
+The action uploads only the folders Easol reads: `assets/`, `blocks/`,
+`pages/`, `partials/`, `templates/` and `types/`. It uploads them in this
+order, so a site never gets a file before the files it needs:
+
+1. `assets/`, `partials/` and `types/`, except `assets/skins/index.json` and
+   skin pages in `assets/skins/<skin>/pages/`
+2. `blocks/` and `templates/`, except `blocks/index.json`
+3. `blocks/index.json`, `assets/skins/index.json`, skin pages and `pages/`
+
+It then deletes files you removed from `pages/`, skin pages and `templates/`.
+Easol lists pages from S3, so a removed page left there would still be offered
+to sites.
+
+It keeps other files you removed from `assets/`, `blocks/`, `partials/` and
+`types/`. Easol caches block markup, the block and skin lists, and skin
+defaults for up to 15 minutes, and that cached content can still use the
+removed files. Sites copy every partial and type in the theme, so remove old
+ones from time to time. Wait at least 15 minutes after the last deploy, and
+run this from a checkout of the deployed commit. Add `--dryrun` first to see
+what it will delete.
+
+```sh
+aws s3 sync . s3://easol-themes/<theme> --delete --region eu-west-1 \
+  --exclude "*" --include "assets/*" --include "blocks/*" \
+  --include "partials/*" --include "types/*"
+```
