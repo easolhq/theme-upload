@@ -65,16 +65,19 @@ It then deletes files you removed from `pages/`, skin pages and `templates/`.
 Easol lists pages from S3, so a removed page left there would still be offered
 to sites.
 
-It keeps other files you removed from `assets/`, `blocks/`, `partials/` and
-`types/`. Easol caches block markup, the block and skin lists, and skin
+Files you removed from `assets/`, `blocks/`, `partials/` and `types/` are kept
+for a while. Easol caches block markup, the block and skin lists, and skin
 defaults for up to 15 minutes, and that cached content can still use the
-removed files. Sites copy every partial and type in the theme, so remove old
-ones from time to time. Wait at least 15 minutes after the last deploy, and
-run this from a checkout of the deployed commit. Add `--dryrun` first to see
-what it will delete.
+removed files.
 
-```sh
-aws s3 sync . s3://easol-themes/<theme> --delete --region eu-west-1 \
-  --exclude "*" --include "assets/*" --include "blocks/*" \
-  --include "partials/*" --include "types/*"
-```
+Each deploy records when it started and the files it uploaded, in
+`.deploy-manifest` in the theme's S3 folder. A later deploy deletes every file
+that is in neither its own commit nor the previous deploy's record, as long as
+the previous deploy started at least 30 minutes earlier. Otherwise it skips
+this step, and a later deploy catches up. A deploy that fails keeps the
+previous deploy's files on its record, so nothing it was about to replace is
+pruned early. This also deletes files outside the
+theme folders left by older versions of this action, such as `.git/`.
+
+Pruning relies on deploys not overlapping, so keep the `concurrency` setting
+from the example.
